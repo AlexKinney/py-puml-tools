@@ -23,6 +23,7 @@ import logging
 import logging.config
 import os
 import sys
+import glob
 
 # other imports
 import yaml
@@ -81,6 +82,7 @@ def cli_parser():
                         ' Create namespaces from there')
     parser.add_argument('py_file', nargs='+',
                         help='the Python source files to parse.')
+    parser.add_argument('--recursive', dest='recursive', action='store_true', default=False)
     return parser
 
 def run(cl_args):
@@ -100,6 +102,13 @@ def run(cl_args):
     logger.info("Using config: %r",
                 {s: {o:v for o, v in cfg.items(s)} for s, o in cfg.items()})
 
+    #Find files to parse
+    py_files = cl_args.py_file
+    if cl_args.recursive:
+        root_dir = '.' if not cl_args.root else cl_args.root
+        files = glob.glob(root_dir + '/**/*.py', recursive=True)
+        py_files.extend(files)
+
     # setup .puml generator
     if cl_args.root:
         gen = PUML_Generator_NS(dest=cl_args.output,
@@ -110,7 +119,7 @@ def run(cl_args):
                              config=cfg)
 
     gen.header()
-    for srcfile in cl_args.py_file:
+    for srcfile in py_files: #cl_args.py_file:
         gen.do_file(srcfile, "Skipping file")
 
     gen.footer()
