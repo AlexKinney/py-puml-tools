@@ -109,14 +109,18 @@ def run(cl_args):
         files = glob.glob(root_dir + '/**/*.py', recursive=True)
         py_files.extend(files)
 
+    py_files = [f for f in py_files if not '__init__' in f]
+
     # setup .puml generator
     if cl_args.root:
         gen = PUML_Generator_NS(dest=cl_args.output,
                                 root=cl_args.root,
-                                config=cfg)
+                                config=cfg,
+                                sources=py_files)
     else:
         gen = PUML_Generator(dest=cl_args.output,
-                             config=cfg)
+                             config=cfg,
+                             sources=py_files)
 
     gen.header()
     for srcfile in py_files: #cl_args.py_file:

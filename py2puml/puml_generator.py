@@ -7,6 +7,7 @@ import ast
 import copy
 import logging
 import os
+import re
 
 # other imports
 import astor
@@ -20,7 +21,7 @@ logger = logging.getLogger() # (__name__)
 class PUML_Generator:
     """Formats data for PlantUML.
     """
-    def __init__(self, dest, config=None):
+    def __init__(self, dest, config=None, sources=None):
         """Constructor.
 
         @param dest stream : File-like object to write to
@@ -29,6 +30,8 @@ class PUML_Generator:
         self.dest = dest
         self.config = config
         self.sourcename = None
+        self.sources = sources
+        self.inherit_relations = []
 
     def opt_prolog(self):
         """Configured prolog for the PlantUML output.
@@ -105,6 +108,9 @@ class PUML_Generator:
 
         Prints configured epilog if exists and close puml section marker.
         """
+        # Print inheritance relations
+        for relation in self.inherit_relations:
+            self.output(relation)
         # append the epilog if provided
         if self.config:
             epilog = self.config.get('puml', 'epilog', fallback=None)
@@ -143,13 +149,30 @@ class PUML_Generator:
             if isinstance(dec, ast.Name) and dec.id == 'staticmethod':
                 return True
 
+    def fmt_class_ns(self, cls):
+        if not self.sources:
+            return cls
+
+        last = cls.split('.')[-1]
+        filename = '/' + last + '.py'
+        available = [src for src in self.sources if filename in src]
+
+        if not available:
+            return cls
+
+        cls = re.split('/|\.', available[0])[1:-1]
+        return '.'.join(cls) + '.' + last
+
     def print_classinfo(self, classinfo):
         """Prints class definition as plantuml script."""
         for base in classinfo.bases:
             expr = astor.to_source(base).rstrip()
             # ignore base if 'object'
             if expr != 'object':
-                self.output(expr, "<|--", classinfo.classname)
+                self.inherit_relations.append( \
+                        self.fmt_class_ns(expr) + \
+                        " <|-- " + self.fmt_class_ns(classinfo.classname))
+
         # class and instance members
         self.output("class", classinfo.classname, "{")
         for m in classinfo.classvars:
@@ -205,8 +228,8 @@ class PUML_Generator:
 class PUML_Generator_NS(PUML_Generator):
     """Formats data for PlantUML.
     """
-    def __init__(self, dest, root, config=None):
-        super().__init__(dest, config)
+    def __init__(self, dest, root, config=None, sources=None):
+        super().__init__(dest, config, sources)
         self.root = root
         self.namespaces = []
 
