@@ -180,10 +180,11 @@ class PUML_Generator:
         for m in classinfo.members:
             self.output(TAB + classinfo.visibility(m) + m)
         for m in classinfo.methods:
-            self.output(TAB + "{0}{1}({2}){3}".format(
+            self.output(TAB + "{0}{1}({2}){3} : {4}".format(
                 classinfo.visibility(m.name),
                 m.name, self.arglist(m, ismethod=True),
-                ','.join(["{%s}" % (self._deco_marker(dec),) for dec in m.decorator_list])
+                ','.join(["{%s}" % (self._deco_marker(dec),) for dec in m.decorator_list]),
+                astor.to_source(m.returns).rstrip() if m.returns else "None"
             ))
         self.output("}\n")
 
