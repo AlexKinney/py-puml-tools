@@ -165,23 +165,22 @@ class PUML_Generator:
 
     def print_classinfo(self, classinfo):
         """Prints class definition as plantuml script."""
-        is_abstract = False
+        prefix = 'class'
         for base in classinfo.bases:
             expr = astor.to_source(base).rstrip()
             # ignore base if 'object'
-            if expr != 'object' and expr != 'ABC':
+            if expr == 'object':
+                pass
+            elif expr == 'ABC':
+                prefix = 'abstract class'
+            elif expr == 'Enum':
+                prefix = 'enum'
+            else:
                 self.inherit_relations.append( \
                         self.fmt_class_ns(expr) + \
                         " <|-- " + self.fmt_class_ns(classinfo.classname))
 
-            if 'ABC' in expr:
-                is_abstract = True
-
         # class and instance members
-        prefix = "class"
-        if is_abstract:
-            prefix = "abstract class"
-
         if classinfo.classname[0] == 'I':
             prefix = "interface"
 
