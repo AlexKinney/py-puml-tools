@@ -163,6 +163,8 @@ class PUML_Generator:
         for dec in meth.decorator_list:
             if isinstance(dec, ast.Name) and name in dec.id:
                 return True
+            if isinstance(dec, ast.Attribute) and name in dec.attr:
+                return True
 
         return False
 
