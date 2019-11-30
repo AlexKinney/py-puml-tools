@@ -197,7 +197,7 @@ class PUML_Generator:
                         astor.to_source(m.returns).rstrip() if m.returns else "None"))
 
         for m in classinfo.methods:
-            if self.has_decorator(m, 'property') or self.has_decorator(m, 'getter'):
+            if self.has_decorator(m, 'property') or self.has_decorator(m, 'setter'):
                 continue
 
             if m.name == '__init__':
