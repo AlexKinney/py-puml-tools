@@ -200,6 +200,11 @@ class PUML_Generator:
             if self.has_decorator(m, 'property') or self.has_decorator(m, 'getter'):
                 continue
 
+            if m.name == '__init__':
+                self.output(TAB + '+{0}({1})'.format(
+                    classinfo.classname, self.arglist(m, ismethod=True)))
+                continue
+
             self.output(TAB + "{0}{1}({2}){3} : {4}".format(
                 classinfo.visibility(m.name),
                 m.name, self.arglist(m, ismethod=True),
