@@ -21,7 +21,7 @@ logger = logging.getLogger() # (__name__)
 class PUML_Generator:
     """Formats data for PlantUML.
     """
-    def __init__(self, dest, config=None, sources=None):
+    def __init__(self, dest, config=None):
         """Constructor.
 
         @param dest stream : File-like object to write to
@@ -30,7 +30,7 @@ class PUML_Generator:
         self.dest = dest
         self.config = config
         self.sourcename = None
-        self.sources = sources
+        self.class_in_module = {}
         self.inherit_relations = []
 
     def opt_prolog(self):
@@ -109,8 +109,16 @@ class PUML_Generator:
         Prints configured epilog if exists and close puml section marker.
         """
         # Print inheritance relations
-        for relation in self.inherit_relations:
-            self.output(relation)
+        for base, derived in self.inherit_relations:
+            fmt_base = base
+            if base in self.class_in_module:
+                fmt_base = self.class_in_module[base] + base
+            fmt_derived = derived
+            if derived in self.class_in_module:
+                fmt_derived = self.class_in_module[derived] + derived
+
+            self.output(fmt_base, '<|--', fmt_derived)
+
         # append the epilog if provided
         if self.config:
             epilog = self.config.get('puml', 'epilog', fallback=None)
@@ -149,20 +157,6 @@ class PUML_Generator:
             if isinstance(dec, ast.Name) and dec.id == 'staticmethod':
                 return True
 
-    def fmt_class_ns(self, cls):
-        if not self.sources:
-            return cls
-
-        last = cls.split('.')[-1]
-        filename = '/' + last + '.py'
-        available = [src for src in self.sources if filename in src]
-
-        if not available:
-            return cls
-
-        cls = re.split('/|\.', available[0])[1:-1]
-        return '.'.join(cls) + '.' + last
-
     def print_classinfo(self, classinfo):
         """Prints class definition as plantuml script."""
         prefix = 'class'
@@ -176,9 +170,7 @@ class PUML_Generator:
             elif expr == 'Enum':
                 prefix = 'enum'
             else:
-                self.inherit_relations.append( \
-                        self.fmt_class_ns(expr) + \
-                        " <|-- " + self.fmt_class_ns(classinfo.classname))
+                self.inherit_relations.append((expr.split('.')[-1], classinfo.classname))
 
         # class and instance members
         if classinfo.classname[0] == 'I':
@@ -239,8 +231,8 @@ class PUML_Generator:
 class PUML_Generator_NS(PUML_Generator):
     """Formats data for PlantUML.
     """
-    def __init__(self, dest, root, config=None, sources=None):
-        super().__init__(dest, config, sources)
+    def __init__(self, dest, root, config=None):
+        super().__init__(dest, config)
         self.root = root
         self.namespaces = []
 
@@ -288,6 +280,15 @@ class PUML_Generator_NS(PUML_Generator):
         if self.namespaces:
             print(TAB * self.depth, end="", file=self.dest)
         super().output(*args)
+
+    def print_classinfo(self, classinfo):
+        full_ns = ''
+        for n in self.namespaces:
+            full_ns += n
+            full_ns += '.'
+
+        self.class_in_module[classinfo.classname] = full_ns
+        super().print_classinfo(classinfo)
 
     def footer(self):
         """Outputs file footer: close namespaces and marker."""

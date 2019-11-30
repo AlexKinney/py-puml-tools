@@ -115,12 +115,10 @@ def run(cl_args):
     if cl_args.root:
         gen = PUML_Generator_NS(dest=cl_args.output,
                                 root=cl_args.root,
-                                config=cfg,
-                                sources=py_files)
+                                config=cfg)
     else:
         gen = PUML_Generator(dest=cl_args.output,
-                             config=cfg,
-                             sources=py_files)
+                             config=cfg)
 
     gen.header()
     for srcfile in py_files: #cl_args.py_file:
