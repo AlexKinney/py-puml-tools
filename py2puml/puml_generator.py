@@ -157,6 +157,15 @@ class PUML_Generator:
             if isinstance(dec, ast.Name) and dec.id == 'staticmethod':
                 return True
 
+    @staticmethod
+    def has_decorator(meth, name):
+        """Tells if the given method is marked with the given property"""
+        for dec in meth.decorator_list:
+            if isinstance(dec, ast.Name) and name in dec.id:
+                return True
+
+        return False
+
     def print_classinfo(self, classinfo):
         """Prints class definition as plantuml script."""
         prefix = 'class'
@@ -181,7 +190,16 @@ class PUML_Generator:
             self.output(TAB + "{static}", classinfo.visibility(m) + m)
         for m in classinfo.members:
             self.output(TAB + classinfo.visibility(m) + m)
+
         for m in classinfo.methods:
+            if self.has_decorator(m, 'property'):
+                self.output(TAB + "+{0} : {1}".format(m.name,
+                        astor.to_source(m.returns).rstrip() if m.returns else "None"))
+
+        for m in classinfo.methods:
+            if self.has_decorator(m, 'property') or self.has_decorator(m, 'getter'):
+                continue
+
             self.output(TAB + "{0}{1}({2}){3} : {4}".format(
                 classinfo.visibility(m.name),
                 m.name, self.arglist(m, ismethod=True),
