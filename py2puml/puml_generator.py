@@ -78,6 +78,15 @@ class PUML_Generator:
         return self.config and self.config.getboolean(
             section, 'omit-defaults', fallback=False)
 
+    def opt_builtin_types(self, section='methods'):
+        """Tells builtin types to add as fields.
+        @return List of strings
+        """
+        if not self.config:
+            return []
+        return eval(self.config.get(
+            section, 'built-in-types', fallback="[]"))
+
     def start_file(self, sourcename):
         """Sets up the output context for a single python source file"""
         self.sourcename = sourcename
@@ -191,8 +200,10 @@ class PUML_Generator:
 
         for m in classinfo.methods:
             if self.has_decorator(m, 'property'):
-                self.output(TAB + "+{0} : {1}".format(m.name,
-                        astor.to_source(m.returns).rstrip() if m.returns else "None"))
+                returns = astor.to_source(m.returns).rstrip() if m.returns else "None"
+                if returns in self.opt_builtin_types():
+                    self.output(TAB + "+{0} : {1}".format(m.name,
+                            astor.to_source(m.returns).rstrip() if m.returns else "None"))
 
         for m in classinfo.methods:
             if self.has_decorator(m, 'property') or self.has_decorator(m, 'setter'):
