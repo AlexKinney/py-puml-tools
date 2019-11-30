@@ -97,7 +97,6 @@ class PUML_Generator:
 
     def header(self):
         """Outputs file header: settings and namespaces."""
-        self.output("@startuml")
         if self.config:
             prolog = self.config.get('puml', 'prolog', fallback=None)
             if prolog:
@@ -124,9 +123,6 @@ class PUML_Generator:
             epilog = self.config.get('puml', 'epilog', fallback=None)
             if epilog:
                 self.output(epilog + "\n")
-
-        # End the PlantUML files.
-        self.output('@enduml')
 
     def do_file(self, srcfile, errormsg=None):
         """Processes a single python source file,
