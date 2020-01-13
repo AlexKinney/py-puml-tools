@@ -28,6 +28,8 @@ class PUML_Generator:
         @param config ConfigParser : custom settings (default None)
         """
         self.dest = dest
+        self.footer_dest = open(dest.name + '.footer', 'w')
+        self.in_footer = False
         self.config = config
         self.sourcename = None
         self.class_in_module = {}
@@ -102,7 +104,7 @@ class PUML_Generator:
 
         @param *args: arguments to be passed to the print() function.
         """
-        print(*args, file=self.dest)
+        print(*args, file=(self.footer_dest if self.in_footer else self.dest))
 
     def header(self):
         """Outputs file header: settings and namespaces."""
@@ -116,6 +118,7 @@ class PUML_Generator:
 
         Prints configured epilog if exists and close puml section marker.
         """
+        self.in_footer = True
         # Print inheritance relations
         for base, derived in self.inherit_relations:
             fmt_base = base
@@ -132,6 +135,7 @@ class PUML_Generator:
             epilog = self.config.get('puml', 'epilog', fallback=None)
             if epilog:
                 self.output(epilog + "\n")
+        self.in_footer = False
 
     def do_file(self, srcfile, errormsg=None):
         """Processes a single python source file,
