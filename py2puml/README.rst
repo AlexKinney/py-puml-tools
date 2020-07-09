@@ -53,7 +53,7 @@ program source code:
 ::
 
     $ cd examples
-    $ ../py2puml.py --config custom.ini ../py2puml.py py2puml-custom.puml
+    $ ../py2puml.py --config custom.ini ../py2puml.py -o py2puml-custom.puml
     $ java -jar /usr/local/share/plantuml/plantuml.jar py2puml-custom.puml
 
 Hand-made ``Makefile``\ s are there to help automatisation.
