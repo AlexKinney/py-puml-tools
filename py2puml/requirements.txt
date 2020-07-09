@@ -1,4 +1,4 @@
-astor==0.6
+astor>=0.8.1
 certifi==2017.7.27.1
 coverage==4.4.1
 py==1.4.34
